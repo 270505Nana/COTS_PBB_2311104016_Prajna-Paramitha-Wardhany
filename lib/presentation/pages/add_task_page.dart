@@ -16,14 +16,12 @@ class AddTaskPage extends StatefulWidget {
 class _AddTaskPageState extends State<AddTaskPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  // _courseController dihapus, diganti dengan state variable dropdown
   final _dateController = TextEditingController();
   final _noteController = TextEditingController();
   
   DateTime? _selectedDate;
-  String? _selectedCourse; // Variabel untuk menyimpan pilihan dropdown
+  String? _selectedCourse;
 
-  // List Mata Kuliah sesuai request
   final List<String> _courseList = [
     "PPB",
     "KWU",
@@ -58,15 +56,15 @@ class _AddTaskPageState extends State<AddTaskPage> {
       
       final newTask = Task(
         title: _titleController.text,
-        course: _selectedCourse!, // Mengambil value dari Dropdown
+        course: _selectedCourse!, 
         deadline: _selectedDate!,
         status: "BERJALAN", 
         note: _noteController.text,
-        isDone: false, // Default isDone [cite: 179]
+        isDone: false, 
       );
 
       try {
-        await _service.addTask(newTask); // POST API [cite: 165]
+        await _service.addTask(newTask); 
         if (mounted) Navigator.pop(context);
       } catch (e) {
         print("ERROR SAAT POST: $e");
@@ -94,7 +92,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // [cite: 42-43]
             CustomTextField(
               label: "Judul Tugas",
               hintText: "Masukkan judul tugas",
@@ -102,13 +99,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
               validator: (val) => val!.isEmpty ? "Judul tugas wajib diisi" : null,
             ),
             const SizedBox(height: 16),
-            
-            // --- BAGIAN DROPDOWN (PENGGANTI TEXTFIELD) ---
-            // Menggunakan styling manual agar mirip dengan CustomTextField
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Mata Kuliah", style: AppTextStyles.section), // Label
+                const Text("Mata Kuliah", style: AppTextStyles.section), 
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedCourse,
@@ -116,7 +110,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.muted),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppColors.surface, // Background putih [cite: 6]
+                    fillColor: AppColors.surface, 
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -138,11 +132,8 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 ),
               ],
             ),
-            // --- END DROPDOWN ---
 
             const SizedBox(height: 16),
-            
-            // [cite: 47-48]
             CustomTextField(
               label: "Deadline",
               hintText: "Pilih tanggal",
@@ -153,8 +144,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
               validator: (val) => val!.isEmpty ? "Tanggal wajib diisi" : null,
             ),
             const SizedBox(height: 16),
-            
-            // [cite: 63]
             CustomTextField(
               label: "Catatan",
               hintText: "Catatan tambahan (opsional)",
@@ -164,7 +153,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
           ],
         ),
       ),
-      // Footer Button (Batal & Simpan) [cite: 66-68]
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(

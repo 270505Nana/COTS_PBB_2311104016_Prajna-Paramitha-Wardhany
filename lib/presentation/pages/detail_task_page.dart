@@ -30,11 +30,9 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
   Future<void> _saveChanges() async {
     setState(() => _isLoading = true);
     try {
-      // Patch Update Note [cite: 182]
       if (_noteController.text != widget.task.note) {
         await _service.updateTaskNote(widget.task.id!, _noteController.text);
       }
-      // Patch Update Status [cite: 190, 200]
       if (_isDone != widget.task.isDone) {
         await _service.updateTaskStatus(widget.task.id!, _isDone);
       }
@@ -59,7 +57,6 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
         iconTheme: const IconThemeData(color: AppColors.text),
         elevation: 0,
         actions: [
-          // Tombol Edit dummy (sesuai desain Screen 3)
           TextButton(
             onPressed: () {},
             child: const Text(
@@ -74,7 +71,6 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card Detail Utama (Judul, Matkul, Deadline, Status) [cite: 37-41]
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -92,8 +88,6 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
                     style: AppTextStyles.body.copyWith(color: AppColors.muted),
                   ),
                   const SizedBox(height: 16),
-
-                  // Row untuk Deadline & Status
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -143,8 +137,6 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
             const SizedBox(height: 24),
             const Text("Penyelesaian", style: AppTextStyles.section),
             const SizedBox(height: 8),
-
-            // Checkbox Penyelesaian [cite: 52]
             Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
@@ -176,7 +168,6 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
             ),
 
             const SizedBox(height: 24),
-            // Input Catatan menggunakan CustomTextField [cite: 55-57]
             CustomTextField(
               label: "Catatan",
               hintText: "Pisahkan Controller, Service...",
@@ -186,7 +177,6 @@ class _DetailTaskPageState extends State<DetailTaskPage> {
           ],
         ),
       ),
-      // Tombol Simpan menggunakan CustomButton [cite: 67]
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: CustomButton(

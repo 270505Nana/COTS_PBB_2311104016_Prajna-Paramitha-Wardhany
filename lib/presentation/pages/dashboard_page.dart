@@ -39,11 +39,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Hitung ringkasan [cite: 13, 14]
     final int total = _tasks.length;
     final int selesai = _tasks.where((t) => t.isDone).length;
-    
-    // Sortir tugas terdekat (yang belum selesai) [cite: 27]
     final upcomingTasks = _tasks.where((t) => !t.isDone).toList()
       ..sort((a, b) => a.deadline.compareTo(b.deadline));
 
@@ -55,7 +52,6 @@ class _DashboardPageState extends State<DashboardPage> {
         elevation: 0,
         centerTitle: false,
         actions: [
-          // Tombol kecil untuk ke halaman All Tasks
           IconButton(
             icon: const Icon(Icons.list_alt, color: AppColors.primary),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTasksPage())),
@@ -72,7 +68,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Kartu Ringkasan (Total & Selesai)
                     Row(
                       children: [
                         _buildSummaryCard("Total Tugas", total.toString()),
@@ -81,8 +76,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    
-                    // Section Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -94,8 +87,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    
-                    // List Tugas Terdekat menggunakan TaskCard Widget
                     if (upcomingTasks.isEmpty)
                       const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("Tidak ada tugas berjalan.", style: AppTextStyles.caption)))
                     else
@@ -103,18 +94,17 @@ class _DashboardPageState extends State<DashboardPage> {
                         task: task,
                         onTap: () async {
                           await Navigator.push(context, MaterialPageRoute(builder: (_) => DetailTaskPage(task: task)));
-                          _loadData(); // Reload saat kembali
+                          _loadData(); 
                         },
                       )),
                     
-                    const SizedBox(height: 80), // Space for FAB
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
             ),
-      // Tombol Tambah Tugas [cite: 12]
       floatingActionButton: SizedBox(
-        width: MediaQuery.of(context).size.width - 32, // Full width minus padding
+        width: MediaQuery.of(context).size.width - 32,
         child: FloatingActionButton.extended(
           backgroundColor: AppColors.primary,
           elevation: 4,
@@ -130,8 +120,6 @@ class _DashboardPageState extends State<DashboardPage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
-
-  // Widget lokal sederhana untuk summary card (sesuai desain Screen 1)
   Widget _buildSummaryCard(String title, String count) {
     return Expanded(
       child: Container(

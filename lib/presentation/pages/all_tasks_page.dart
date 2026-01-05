@@ -29,7 +29,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
   Future<void> _loadTasks() async {
     setState(() => _isLoading = true);
     try {
-      // Filter logic di handle di service [cite: 136-149]
       final tasks = await _service.getTasks(status: _selectedFilter == 'Semua' ? null : _selectedFilter);
       setState(() {
         _tasks = tasks;
@@ -61,7 +60,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
       ),
       body: Column(
         children: [
-          // Search Bar (Visual Only sesuai Screen 2 [cite: 8])
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
@@ -75,8 +73,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
               ),
             ),
           ),
-          
-          // Filter Chips Scrollable [cite: 25-26]
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -108,8 +104,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
               }).toList(),
             ),
           ),
-          
-          // List Data menggunakan TaskCard
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())

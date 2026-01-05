@@ -15,7 +15,6 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Logic warna status
     Color statusColor;
     Color statusBg;
     
@@ -42,7 +41,6 @@ class TaskCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Indikator bulat kecil (seperti di desain List)
               if (!task.isDone) ...[
                 Icon(Icons.circle, size: 10, color: statusColor),
                 const SizedBox(width: 12),
