@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cots/design_system/styles.dart';
 import 'package:cots/models/task.dart';
 import 'package:cots/services/task_service.dart';
+import 'package:cots/presentation/widgets/task_card.dart';
 import 'detail_task_page.dart';
 import 'add_task_page.dart';
-import 'package:intl/intl.dart';
 
 class AllTasksPage extends StatefulWidget {
   const AllTasksPage({super.key});
@@ -16,8 +16,9 @@ class AllTasksPage extends StatefulWidget {
 class _AllTasksPageState extends State<AllTasksPage> {
   final TaskService _service = TaskService();
   List<Task> _tasks = [];
+  bool _isLoading = true;
   String _selectedFilter = 'Semua';
-  final List<String> _filters = ['Semua', 'BERJALAN', 'SELESAI', 'TERLAMBAT'];
+  final List<String> _filters = ['Semua', 'BERJALAN', 'SELESAI', 'TERLAMBAT']; // [cite: 135]
 
   @override
   void initState() {
@@ -26,10 +27,17 @@ class _AllTasksPageState extends State<AllTasksPage> {
   }
 
   Future<void> _loadTasks() async {
-    final tasks = await _service.getTasks(status: _selectedFilter == 'Semua' ? null : _selectedFilter);
-    setState(() {
-      _tasks = tasks;
-    });
+    setState(() => _isLoading = true);
+    try {
+      // Filter logic di handle di service [cite: 136-149]
+      final tasks = await _service.getTasks(status: _selectedFilter == 'Semua' ? null : _selectedFilter);
+      setState(() {
+        _tasks = tasks;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -53,37 +61,46 @@ class _AllTasksPageState extends State<AllTasksPage> {
       ),
       body: Column(
         children: [
-          // Search Bar Placeholder (Visual only as per design)
+          // Search Bar (Visual Only sesuai Screen 2 [cite: 8])
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
               decoration: InputDecoration(
                 hintText: "Cari tugas atau mata kuliah...",
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search, color: AppColors.muted),
                 filled: true,
                 fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
           ),
-          // Filter Chips
+          
+          // Filter Chips Scrollable [cite: 25-26]
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: _filters.map((filter) {
                 final isSelected = _selectedFilter == filter;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
+                  child: FilterChip(
                     label: Text(filter),
                     selected: isSelected,
+                    showCheckmark: false,
+                    backgroundColor: AppColors.surface,
                     selectedColor: AppColors.primary,
-                    labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.text),
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.text,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
+                    ),
                     onSelected: (bool selected) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
+                      setState(() => _selectedFilter = filter);
                       _loadTasks();
                     },
                   ),
@@ -91,30 +108,30 @@ class _AllTasksPageState extends State<AllTasksPage> {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 16),
-          // List
+          
+          // List Data menggunakan TaskCard
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                final task = _tasks[index];
-                return Card(
-                  color: AppColors.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    leading: const Icon(Icons.circle, size: 12, color: AppColors.primary),
-                    title: Text(task.title, style: AppTextStyles.section),
-                    subtitle: Text(task.course, style: AppTextStyles.caption),
-                    trailing: Text(DateFormat('d MMM').format(task.deadline), style: AppTextStyles.body),
-                    onTap: () async {
-                      await Navigator.push(context, MaterialPageRoute(builder: (_) => DetailTaskPage(task: task)));
-                      _loadTasks();
-                    },
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _loadTasks,
+                    child: _tasks.isEmpty
+                        ? const Center(child: Text("Tidak ada tugas ditemukan"))
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _tasks.length,
+                            itemBuilder: (context, index) {
+                              final task = _tasks[index];
+                              return TaskCard(
+                                task: task,
+                                onTap: () async {
+                                  await Navigator.push(context, MaterialPageRoute(builder: (_) => DetailTaskPage(task: task)));
+                                  _loadTasks();
+                                },
+                              );
+                            },
+                          ),
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

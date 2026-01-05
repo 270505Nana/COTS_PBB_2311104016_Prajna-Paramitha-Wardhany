@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:cots/design_system/styles.dart';
 import 'package:cots/models/task.dart';
 import 'package:cots/services/task_service.dart';
+import 'package:cots/presentation/widgets/task_card.dart'; 
 import 'all_tasks_page.dart';
 import 'add_task_page.dart';
 import 'detail_task_page.dart';
@@ -27,21 +27,23 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadData() async {
     try {
-      final tasks = await _service.getTasks(); // Fetch all for counts
+      final tasks = await _service.getTasks();
       setState(() {
         _tasks = tasks;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Hitung ringkasan [cite: 13, 14]
     final int total = _tasks.length;
     final int selesai = _tasks.where((t) => t.isDone).length;
-    // Tugas terdekat (sort by deadline, ambil yg belum selesai)
+    
+    // Sortir tugas terdekat (yang belum selesai) [cite: 27]
     final upcomingTasks = _tasks.where((t) => !t.isDone).toList()
       ..sort((a, b) => a.deadline.compareTo(b.deadline));
 
@@ -53,6 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
         elevation: 0,
         centerTitle: false,
         actions: [
+          // Tombol kecil untuk ke halaman All Tasks
           IconButton(
             icon: const Icon(Icons.list_alt, color: AppColors.primary),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTasksPage())),
@@ -61,41 +64,74 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _buildSummaryCard("Total Tugas", total.toString()),
-                      const SizedBox(width: 16),
-                      _buildSummaryCard("Selesai", selesai.toString()),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Text("Tugas Terdekat", style: AppTextStyles.section),
-                  const SizedBox(height: 16),
-                  ...upcomingTasks.take(3).map((task) => _buildTaskCard(task)),
-                ],
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Kartu Ringkasan (Total & Selesai)
+                    Row(
+                      children: [
+                        _buildSummaryCard("Total Tugas", total.toString()),
+                        const SizedBox(width: 16),
+                        _buildSummaryCard("Selesai", selesai.toString()),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Section Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Tugas Terdekat", style: AppTextStyles.section),
+                        GestureDetector(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTasksPage())),
+                          child: Text("Lihat Semua", style: AppTextStyles.button.copyWith(color: AppColors.primary)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // List Tugas Terdekat menggunakan TaskCard Widget
+                    if (upcomingTasks.isEmpty)
+                      const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("Tidak ada tugas berjalan.", style: AppTextStyles.caption)))
+                    else
+                      ...upcomingTasks.take(3).map((task) => TaskCard(
+                        task: task,
+                        onTap: () async {
+                          await Navigator.push(context, MaterialPageRoute(builder: (_) => DetailTaskPage(task: task)));
+                          _loadData(); // Reload saat kembali
+                        },
+                      )),
+                    
+                    const SizedBox(height: 80), // Space for FAB
+                  ],
+                ),
               ),
             ),
+      // Tombol Tambah Tugas [cite: 12]
       floatingActionButton: SizedBox(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        width: MediaQuery.of(context).size.width - 32, // Full width minus padding
         child: FloatingActionButton.extended(
           backgroundColor: AppColors.primary,
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           onPressed: () async {
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddTaskPage()));
             _loadData();
           },
           label: const Text("Tambah Tugas", style: AppTextStyles.button),
+          icon: const Icon(Icons.add, color: Colors.white),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
+  // Widget lokal sederhana untuk summary card (sesuai desain Screen 1)
   Widget _buildSummaryCard(String title, String count) {
     return Expanded(
       child: Container(
@@ -103,6 +139,9 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,37 +151,6 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(count, style: AppTextStyles.title.copyWith(fontSize: 32)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(Task task) {
-    return Card(
-      elevation: 0,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        title: Text(task.title, style: AppTextStyles.section),
-        subtitle: Text("${task.course}\nDeadline: ${DateFormat('d MMM yyyy').format(task.deadline)}", style: AppTextStyles.caption),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: task.isDone ? AppColors.background : AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            task.status,
-            style: AppTextStyles.caption.copyWith(
-              color: task.isDone ? AppColors.muted : AppColors.primary,
-              fontWeight: FontWeight.bold
-            ),
-          ),
-        ),
-        onTap: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => DetailTaskPage(task: task)));
-          _loadData();
-        },
       ),
     );
   }
